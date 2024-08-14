@@ -4,6 +4,7 @@ defmodule Passbook.PassStructure do
 
   These keys are used for all pass styles and partition the fields into the various parts of the pass.
   """
+  require Jason
 
   @derive Jason.Encoder
   defstruct auxiliary_fields: nil,
@@ -25,7 +26,7 @@ defmodule Passbook.PassStructure do
           transit_type: transit_type | nil
         }
 
-  defimpl Jason.Encoder do
+  defimpl Jason.Encoder, for: PassStructure do
     @transit_mapping [
       air: "PKTransitTypeAir",
       boat: "PKTransitTypeBoat",
