@@ -34,16 +34,14 @@ defmodule Passbook do
               value: "my-value"
             }
           ]
-        }}, ["icon.png": "path/to/file.png", "icon@2x.png": "path/to/file.png"], "path/to/wwdr.pem", "path/to/certificate.pem", "path/to/key.pem", "password", target_path: System.tmp_dir!(), pass_name: "mypass")
+        }}, ["icon.png": "path/to/file.png", "icon@2x.png": "path/to/file.png"], [wwdr: "path/to/wwdr.pem", certificate: "path/to/certificate.pem", key: "path/to/key.pem", target_path: System.tmp_dir!()], "password",  pass_name: "mypass")
       {:ok, "path/to/generated/mypass.pkpass"}
 
   """
   def generate(
         pass,
         files,
-        wwdr_path,
-        certificate_path,
-        key_path,
+        paths,
         password,
         opts \\ []
       )
@@ -51,15 +49,12 @@ defmodule Passbook do
   def generate(
         %Passbook.Pass{} = pass,
         files,
-        wwdr_path,
-        certificate_path,
-        key_path,
+        paths,
         password,
         opts
       ) do
     # Options setup
     default = [
-      target_path: get_tmp_dir(),
       pass_name: :crypto.strong_rand_bytes(16) |> Base.encode16(),
       delete_raw_pass: true
     ]
@@ -68,7 +63,7 @@ defmodule Passbook do
 
     # Make sure target path is created and available
     random = :crypto.strong_rand_bytes(16) |> Base.encode16()
-    target_path = opts[:target_path] <> random <> "/"
+    target_path = paths[:target_path] <> random <> "/"
     File.mkdir_p(Path.dirname(target_path))
 
     # Generate pass.json
@@ -83,9 +78,9 @@ defmodule Passbook do
     create_signature(
       target_path <> "manifest.json",
       target_path <> "signature",
-      certificate_path,
-      key_path,
-      wwdr_path,
+      paths[:certificate],
+      paths[:key],
+      paths[:wwdr],
       password
     )
 
@@ -103,20 +98,10 @@ defmodule Passbook do
       :zip.create(to_string(target_path <> "#{opts[:pass_name]}.pkpass"), files, cwd: target_path)
 
     if opts[:delete_raw_pass], do: Enum.map(files, &File.rm(target_path <> to_string(&1)))
-
     pkpass
   end
 
   def generate(_, _, _, _, _, _, _), do: {:error, :invalid_data}
-
-  defp get_tmp_dir() do
-    tmp_dir = System.tmp_dir!()
-
-    cond do
-      String.slice(tmp_dir, -1..-1) == "/" -> tmp_dir
-      true -> tmp_dir <> "/"
-    end
-  end
 
   defp create_manifest(files) do
     for(
@@ -136,9 +121,9 @@ defmodule Passbook do
          key_path,
          wwdr_certificate_path,
          password
-       ),
-       do:
-         :os.cmd(
-           'openssl smime -sign -signer #{certificate_path} -inkey #{key_path} -certfile #{wwdr_certificate_path} -in #{manifest_path} -out #{signature_path} -outform der -binary -passin pass:"#{password}"'
-         )
+       ) do
+    :os.cmd(
+      ~c'openssl smime -sign -signer #{certificate_path} -inkey #{key_path} -certfile #{wwdr_certificate_path} -in #{manifest_path} -out #{signature_path} -outform der -binary -passin pass:"#{password}"'
+    )
+  end
 end
