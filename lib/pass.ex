@@ -8,7 +8,7 @@ defmodule Passbook.Pass do
   @derive Jason.Encoder
   defstruct [
     :description,
-    :web_service_URL,
+    :web_serviceURL,
     :organization_name,
     :pass_type_identifier,
     :serial_number,
@@ -33,7 +33,7 @@ defmodule Passbook.Pass do
 
   @type t() :: %__MODULE__{
           description: String.t(),
-          web_service_URL: String.t(),
+          web_serviceURL: String.t(),
           format_version: integer(),
           organization_name: String.t(),
           pass_type_identifier: String.t(),
