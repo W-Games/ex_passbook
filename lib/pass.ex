@@ -9,6 +9,7 @@ defmodule Passbook.Pass do
   defstruct [
     :description,
     :web_serviceURL,
+    :authentication_token,
     :organization_name,
     :pass_type_identifier,
     :serial_number,
@@ -34,6 +35,7 @@ defmodule Passbook.Pass do
   @type t() :: %__MODULE__{
           description: String.t(),
           web_serviceURL: String.t(),
+          authentication_token: String.t(),
           format_version: integer(),
           organization_name: String.t(),
           pass_type_identifier: String.t(),
