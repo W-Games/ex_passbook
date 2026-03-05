@@ -102,7 +102,11 @@ defmodule Passbook do
       )
 
     if opts[:delete_raw_pass], do: Enum.map(files, &File.rm(target_path <> to_string(&1)))
-    pkpass
+
+    case pkpass do
+      {:ok, path} -> {:ok, to_string(path)}
+      error -> error
+    end
   end
 
   def generate(_, _, _, _, _, _, _), do: {:error, :invalid_data}
